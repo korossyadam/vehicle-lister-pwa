@@ -1,0 +1,312 @@
+html,
+body {
+   overflow-x: hidden;
+   width: 100%;
+   max-width: 100%;
+}
+
+/* Upper sidenav contains the searchbar */
+.upper-sidenav-container {
+   position: fixed;
+   display: block;
+   top: 0px;
+   left: 0px;
+   width: 100%;
+   height: 200px;
+   margin: auto;
+   padding: 10px;
+   overflow: hidden;
+}
+
+.upper-sidenav {
+   position: absolute;
+   display: block;
+   left: 0px;
+   width: 560px;
+   margin: auto;
+   padding: 10px;
+   background-color: white;
+   overflow: hidden;
+}
+
+.upper-menu {
+   position: fixed;
+   background-color: #333333;
+   top: 0px;
+   left: 0px;
+   width: 560px;
+   height: 200px;
+   overflow: hidden;
+}
+
+/* Lower sidenav contains the listElements */
+.lower-sidenav-container {
+   position: fixed;
+   top: 0px;
+   left: 0px;
+   width: 100%;
+   max-width: 100%;
+   height: 100%;
+}
+
+.lower-sidenav {
+   position: flex;
+   left: 0px;
+   width: 560px;
+   max-width: 100%;
+   height: 100%;
+   padding-top: 200px;
+   background-color: white;
+}
+
+.lower-menu {
+   position: relative;
+   width: 560px;
+   max-width: 96%;
+   margin-left: 10px;
+}
+
+.framed {
+   padding: 10px;
+   top: 20px;
+}
+
+.closing-side {
+   position: fixed;
+   top: 0px;
+   left: 560px;
+   width: 100%;
+   height: 100%;
+}
+
+.text-input {
+   position: absolute;
+   top: 35%;
+   left: 23px;
+   height: 45px;
+   width: 500px;
+   padding: 0px 5px;
+   font-size: 20px;
+}
+
+.text-input-small {
+   position: absolute;
+   top: 155px;
+   height: 30px;
+   width: 100px;
+   padding: 0px 5px;
+   font-size: 14px;
+}
+
+.select-input-fuel {
+   position: absolute;
+   top: 155px;
+   left: 156px;
+   height: 34px;
+   width: 113px;
+   font-size: 14px;
+}
+
+.year {
+   left: 23px;
+}
+
+.fuel {
+   left: 156px;
+}
+
+.kw {
+   left: 288px;
+}
+
+.hp {
+   left: 421px;
+}
+
+.main-label {
+   position: fixed;
+   color: white;
+   font-size: 22px;
+   margin-top: 26px;
+   margin-left: 25px;
+}
+
+.label-small {
+   position: absolute;
+   top: 122px;
+   color: white;
+   font-size: 13px;
+}
+
+.extra-push {
+   margin-left: 55px;
+}
+
+.close-icon {
+   position: fixed;
+   color: #6e6e6e;
+   margin-top: 15px;
+   margin-left: 505px;
+}
+
+.back-icon {
+   position: fixed;
+   color: white;
+   margin: 20px;
+}
+
+.vehicle-img-container {
+   text-align: center;
+}
+
+.error-icon {
+   position: absolute;
+   top: 44%;
+   left: 45%;
+   transform: scale(5);
+}
+
+.vehicle-type-button {
+   position: absolute;
+   width: 112px;
+}
+
+.car-type-button {
+   display: table-cell;
+   width: 500px;
+   font-family: Arial;
+   font-size: 14px;
+   color: #000000;
+   padding: 10px;
+   margin: 5px;
+   cursor: pointer;
+
+}
+
+.hovered {
+   background-color: #333333;
+   color: #ffffff;
+}
+
+.decor-row {
+   width: 500px;
+   font-size: 14px;
+   font-weight: bold;
+   background-color: #efefef;
+   color: #6e6e6e;
+   padding-top: 5px;
+   padding-bottom: 5px;
+   padding-left: 10px;
+}
+
+.fixed_1 {
+   position: fixed;
+   top: 200px;
+   left: 20px;
+   padding-top: 7px;
+   padding-right: 409px;
+   padding-bottom: 6px;
+   margin: 0px;
+}
+
+.fixed_2 {
+   position: fixed;
+   top: 200px;
+   padding-top: 7px;
+   left: 117px;
+}
+
+.fixed_3 {
+   position: fixed;
+   top: 200px;
+   padding-top: 7px;
+   left: 280px;
+   padding-bottom: 6px;
+}
+
+.fixed_4 {
+   position: fixed;
+   top: 200px;
+   padding-top: 7px;
+   left: 371px;
+   padding-bottom: 6px;
+}
+
+.fixed_5 {
+   position: fixed;
+   top: 200px;
+   padding-top: 3px;
+   padding-right: 0px;
+   left: 455px;
+   background-color: transparent;
+}
+
+.engine-code {
+   font-size: 12px;
+   color: #6e6e6e;
+}
+
+.half-width {
+   width: 240px;
+}
+
+.fifth-width {
+   width: 82px;
+}
+
+.engine-width {
+   width: 120px;
+}
+
+.year-width {
+   width: 120px;
+   white-space: nowrap;
+}
+
+.center {
+   text-align: center;
+}
+
+.left-float {
+   float: left;
+}
+
+.right-float {
+   float: right;
+}
+
+html, body {
+   height: 100%;
+   margin: 0;
+}
+
+.wrapper {
+   min-height: 100%;
+   margin-bottom: -50px;
+}
+
+.push {
+   height: 180px;
+}
+
+.pushed {
+   overflow: auto;
+   position: absolute;
+   width: 100%;
+   height: 54px;
+}
+
+.main {
+   overflow: auto;
+   position: absolute;
+   top: 0;
+   bottom: 0;
+   width: 100%;
+}
+
+.spinner {
+   position: absolute;
+   top: 200px;
+   left: 180px;
+}
+

@@ -1,0 +1,199 @@
+<!-- Displayed selected vehicle image on top of everything-->
+<mat-card *ngIf="hoveredTextIndex != -1 && stage == 1" [ngStyle]="imgCardStyle">
+   <img *ngIf="chassisActive[hoveredTextIndex].hasImg == true" src="https://storage.googleapis.com/west-webshop.appspot.com/{{ chassisActive[hoveredTextIndex].chassisIndex }}.png" alt="">
+   <mat-icon *ngIf="chassisActive[hoveredTextIndex].hasImg == false" class="error-icon">image_not_supported</mat-icon>
+</mat-card>
+
+<!-- Upper SideNav for searchbars -->
+<mat-sidenav-container hasBackdrop="false" class="upper-sidenav-container">
+   <mat-sidenav class="upper-sidenav" mode="over" disableClose="true" #upperSideNav>
+
+      <!-- Selectors -->
+      <div class="upper-menu">
+
+         <!-- Close button -->
+         <button mat-icon-button class="close-icon" (click)="closeSideNavs()">
+            <mat-icon>close</mat-icon>
+         </button>
+
+         <!-- Brand select -->
+         <div *ngIf="stage == 0">
+            <p class="main-label">Jármű kiválasztása</p>
+            <input type="text" class="text-input" placeholder="Márka" (input)="reAddBrands($event)" />
+         </div>
+
+         <!-- Chassis select -->
+         <div *ngIf="stage == 1">
+
+            <!-- Back button -->
+            <button mat-icon-button class="back-icon" (click)="back()">
+               <mat-icon>arrow_back_ios</mat-icon>
+            </button>
+
+            <!-- Main text label -->
+            <p class="main-label extra-push">Karosszéria kiválasztása</p>
+
+            <!-- Type search input -->
+
+            <input type="text" class="text-input" placeholder="Pl. Civic, Astra, Golf, E46 stb." #type (input)="reAddChassis(type.value, year.value)" />
+
+            <!-- Year search input -->
+            <p class="label-small year">ÉV</p>
+            <input type="text" class="text-input-small year" placeholder="Pl. 2012" #year (input)="reAddChassis(type.value, year.value)" />
+
+         </div>
+
+         <!-- Engine select -->
+         <div *ngIf="stage == 2">
+
+            <!-- Back button -->
+            <button mat-icon-button class="back-icon" (click)="back()">
+               <mat-icon>arrow_back_ios</mat-icon>
+            </button>
+
+            <!-- Main text label -->
+            <p class="main-label extra-push">Motorkód kiválasztása</p>
+
+            <!-- Engine code search input -->
+            <input type="text" class="text-input" placeholder="Pl. AVF, Z14XE, 939 A2.000 stb." #engine (input)="reAddCars(engine.value, year.value, kw.value, hp.value, fuel.value)" />
+
+            <!-- Year search input -->
+            <p class="label-small year">ÉV</p>
+            <input type="text" class="text-input-small year" placeholder="Pl. 2012" #year (input)="reAddCars(engine.value, year.value, kw.value, hp.value, fuel.value)" />
+
+            <!-- Fuel search input -->
+            <p class="label-small fuel">ÜZEMANYAG</p>
+            <select class="select-input-fuel" #fuel (change)="reAddCars(engine.value, year.value, kw.value, hp.value, fuel.value)">
+               <option value="all">Összes</option>
+               <option value="Benzin">Benzin</option>
+               <option value="Dízel">Dízel</option>
+               <option value="Benzin/elektromos">Elektromos - Benzin</option>
+               <option value="Dízel/elektromos">Elektromos - Dízel</option>
+               <option value="villamos">Elektromos</option>
+               <option value="Benzin/Földgáz (CNG)">Benzin - Földgáz (CNG)</option>
+               <option value="Benzin/Autógáz (LPG)">Benzin - Autógáz (LPG)</option>
+               <option value="Benzin/Etanol">Benzin - Etanol</option>
+               <option value="Etanol">Etanol</option>
+            </select>
+
+            <!-- Performance (KW) search input -->
+            <p class="label-small kw">KW</p>
+            <input type="text" class="text-input-small kw" placeholder="Pl. 75" #kw (input)="reAddCars(engine.value, year.value, kw.value, hp.value, fuel.value)" />
+
+            <!-- Performance (HP) search input -->
+            <p class="label-small hp">LE</p>
+            <input type="text" class="text-input-small hp" placeholder="Pl. 101" #hp (input)="reAddCars(engine.value, year.value, kw.value, hp.value, fuel.value)" />
+
+         </div>
+      </div>
+
+      <!-- This div represents the parts of webapp that is not the sidenav, therefore allowing closing the sidenav with a click -->
+      <div class="closing-side" (click)="closeSideNavs()"></div>
+
+      <br>
+
+   </mat-sidenav>
+
+   <!-- Upper SideNav main content -->
+   <mat-sidenav-content>
+
+      <!-- Lower SideNav for listElements -->
+      <mat-sidenav-container hasBackdrop="true" class="lower-sidenav-container">
+         <mat-sidenav class="lower-sidenav" [ngClass]="{'gray-background': loading}" mode="over" (onClose)="closeSideNavs()" disableClose="true" #lowerSideNav>
+            <div class="lower-menu">
+               <tbody *ngIf="!loading">
+
+                  <div class="framed">
+                     <!-- Brand selector-->
+                     <div *ngIf="stage == 0">
+                        <ng-container *ngFor="let brand of brands; let i = index">
+                           <tr>
+                              <td *ngIf="onlyDecor(brand) || lastDecor != getNewDecor(brand)" class="decor-row">{{ lastDecor }}</td>
+                           </tr>
+                           <tr>
+                              <td><a id={{i}} class="car-type-button" [ngClass]="{'hovered': hoveredTextIndex === i}" (mouseover)="setHoveredIndex(i)" (click)="selectElements(brand)">{{ brand }}</a></td>
+                           </tr>
+                        </ng-container>
+                     </div>
+
+                     <!-- Chassis selector -->
+                     <div *ngIf="stage == 1">
+                        <ng-container *ngFor="let chassis of chassisActive; let i = index">
+                           <tr *ngIf="onlyDecor(chassis.name) || lastDecor != getNewDecor(chassis.name)" class="decor-row">
+                              <td class="decor-row half-width">{{ lastDecor }}</td>
+                              <td class="decor-row half-width"></td>
+                           </tr>
+                           <tr>
+                              <td><a id={{i}} class="car-type-button half-width" [ngClass]="{'hovered': hoveredTextIndex === i}" (mouseover)="setHoveredIndex(i)" (click)="selectElements(chassis.name)">{{ chassis.name }}</a></td>
+                              <td class="car-type-button half-width" [ngClass]="{'hovered': hoveredTextIndex === i}" (mouseover)="setHoveredIndex(i)" (click)="selectElements(chassis.name)">{{ chassis.year }}</td>
+                           </tr>
+
+                        </ng-container>
+                     </div>
+                  </div>
+
+                  <!-- Engine selector-->
+                  <div *ngIf="stage == 2">
+                     <td class="decor-row fifth-width fixed_1">Típus</td>
+                     <td class="decor-row fifth-width fixed_2">Gyártási év</td>
+                     <td class="decor-row fifth-width fixed_3">KW</td>
+                     <td class="decor-row fifth-width fixed_4">LE</td>
+                     <td class="decor-row fifth-width fixed_5">CM<sup>3</sup></td>
+
+                     <div class="framed" style="margin-top: 10px;">
+                        <ng-container *ngFor="let car of carsActive; let i = index">
+                           
+                           <!-- Gray line above every new engine displacement category -->
+                           <tr *ngIf="lastDecor != getNewDecor(car.engine)">
+                              <td class="decor-row fifth-width">{{ lastDecor }}</td>
+                              <td class="decor-row fifth-width"></td>
+                              <td class="decor-row fifth-width"></td>
+                              <td class="decor-row fifth-width"></td>
+                              <td class="decor-row fifth-width"></td>
+                           </tr>
+
+                           <!-- The actual button that leads to part selector -->
+                           <tr [routerLink]="['/car', car.carIndex]" (click)="closeSideNavs()">
+                              <td id={{i}} class="car-type-button engine-width" [ngClass]="{'hovered': hoveredTextIndex === i}" (mouseover)="setHoveredIndex(i)">{{ car.engine }}<span class="engine-code"><br>{{ carsActive[i].engineCode }}</span></td>
+                              <td class="car-type-button year-width" [ngClass]="{'hovered': hoveredTextIndex === i}" (mouseover)="setHoveredIndex(i)">{{ carsActive[i].year }}</td>
+                              <td class="car-type-button fifth-width center" [ngClass]="{'hovered': hoveredTextIndex === i}" (mouseover)="setHoveredIndex(i)">{{ carsActive[i].kw }}</td>
+                              <td class="car-type-button fifth-width center" [ngClass]="{'hovered': hoveredTextIndex === i}" (mouseover)="setHoveredIndex(i)">{{ carsActive[i].hp }}</td>
+                              <td class="car-type-button fifth-width center" [ngClass]="{'hovered': hoveredTextIndex === i}" (mouseover)="setHoveredIndex(i)">{{ carsActive[i].displacement }}</td>
+                           </tr>
+
+                        </ng-container>
+                     </div>
+                  </div>
+
+               </tbody>
+
+               <!-- Spinning loading screen -->
+               <mat-spinner *ngIf="loading" color="warn" class="spinner"></mat-spinner>
+
+            </div>
+
+         </mat-sidenav>
+
+         <!-- Actual main content with wrappers -->
+         <mat-sidenav-content>
+            <div class="main">
+
+               <!-- Push down scrollbar from top -->
+               <div class="pushed"></div>
+
+               <!-- Main Content -->
+               <div class="main">
+                  <div class="wrapper">
+                     <app-main-navigation (carSelectClickedEvent)="openSideNav()"></app-main-navigation>
+                     <div class="push"></div>
+                  </div>
+               </div>
+
+            </div>
+            
+         </mat-sidenav-content>
+
+      </mat-sidenav-container>
+
+   </mat-sidenav-content>
+</mat-sidenav-container>
