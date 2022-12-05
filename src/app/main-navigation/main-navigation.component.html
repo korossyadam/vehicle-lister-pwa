@@ -2,7 +2,7 @@
    <button mat-icon-button (click)="onCarSelectorButtonClick()">
       <mat-icon>menu</mat-icon>
    </button>
-   <span>Vehicle Lister Application</span>
+   <span routerLink="/home" class="clickable">Vehicle Lister Application</span>
 </mat-toolbar>
 
-<app-home></app-home>
+<router-outlet></router-outlet>

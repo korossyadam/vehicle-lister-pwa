@@ -1,1 +1,10 @@
-<p>home works!</p>
+<div class="container">
+   <h1>Progresszív Webalkalmazás fejlesztés kötprog 2022.</h1>
+   <h3>Korossy Ádám CPR7WO</h3>
+   <h3>Válassz egy járművet az oldalsó menün keresztül</h3>
+
+   <!-- This section only visible when no internet connection is avaible -->
+   <div *ngIf="!isOnline">
+      <p class="offline-text">[Offline ready]</p>
+   </div>
+</div>

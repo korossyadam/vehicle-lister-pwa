@@ -1,0 +1,26 @@
+.content-container {
+   position: relative;
+   top: 90px;
+   margin: 0 auto;
+   width: 1200px;
+}
+
+.car-container {
+   width: 500px;
+   text-align: center;
+   margin: 0 auto;
+}
+
+.car-container p {
+   text-align: left;
+   font-size: 15px;
+   color: #444444;
+}
+
+.car-img {
+   width: 350px;
+}
+
+.car-info span {
+   float: right;
+}

@@ -1,14 +1,15 @@
 import { ChangeDetectorRef, Component, HostListener, OnInit, ViewChild } from '@angular/core';
 import { Chassis } from '../models/chassis.model';
 import { CarSelectorService } from '../services/car-selector.service';
-
 import { Car } from '../models/car.model';
 import { MatSidenav } from '@angular/material/sidenav';
-import { first } from 'rxjs/operators';
-import { from, observable } from 'rxjs';
+import { Observable, Observer, fromEvent, merge } from 'rxjs';
+import { map } from 'rxjs/operators';
 
+import { SwUpdate } from '@angular/service-worker';
 import { liveQuery } from 'dexie';
-import { db, TodoList } from '../db';
+import { db } from '../db';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
    selector: 'app-car-selector',
@@ -21,11 +22,10 @@ export class CarSelectorComponent implements OnInit {
    @ViewChild('upperSideNav') upperSideNav: MatSidenav;
    @ViewChild('lowerSideNav') lowerSideNav: MatSidenav;
 
-   //public brands:
-   public brands;
-
    // Query results are stored in these arrays
    public listElements: string[] = [];
+   public brands: string[];
+   public activeBrands: string[];
    public chassis: Chassis[];
    public chassisActive: Chassis[];
    public cars: Car[];
@@ -47,7 +47,15 @@ export class CarSelectorComponent implements OnInit {
 
    public loading = false;
 
-   constructor(private carSelectorService: CarSelectorService, private cdr: ChangeDetectorRef) { }
+   // PWA variables
+   public update: boolean = false;
+   public isOnline: boolean;
+
+   constructor(updates: SwUpdate, private carSelectorService: CarSelectorService, private cdr: ChangeDetectorRef, private sanitizer: DomSanitizer) {
+      updates.available.subscribe(res => {
+         updates.activateUpdate().then(() => document.location.reload());
+      });
+   }
 
    // KeyBoardListener - we use this to close all sidenavs with ESCAPE
    @HostListener('document:keyup', ['$event'])
@@ -57,36 +65,56 @@ export class CarSelectorComponent implements OnInit {
       }
    }
 
+   /* On init configure indexedDB */
    ngOnInit(): void {
 
-      //console.log(data);
+      // First populate db with all avaible brands
+      db.populate().then(res => {
 
-      this.populate();
+         // Change isOnline variable on network status change
+         this.createOnline$().subscribe(isOnline => this.isOnline = isOnline);
 
-
-
-
-      /*for (let i = 0; i < observables.length; i++) {
-         observables[i].pipe(first()).subscribe(data => {
-            //this.cars.push(data);
-            console.log(data);
-         });
-      }
-      */
-
-
-
+         // If online, query for additional cars from API
+         if (this.isOnline) {
+            this.populateFromAPI();
+            // If offline, do not query
+         } else {
+            this.getAllActiveBrands();
+         }
+      });
    }
 
-   async populate() {
-      this.cars = [];
-      this.brands = [];
-      await this.carSelectorService.queryForRandomCars().then(observables => {
+   /**
+    * Creates an observable to watch network connection
+    */
+   createOnline$() {
+      return merge(
+         fromEvent(window, 'offline').pipe(map(() => false)),
+         fromEvent(window, 'online').pipe(map(() => true)),
+         new Observable((sub: Observer<boolean>) => {
+            sub.next(navigator.onLine);
+            sub.complete();
+         })
+      );
+   }
 
+   /**
+    * This function only runs on init when there is internet connection avaible
+    * First queries a randomly selected N amount of Cars from Firebase API
+    * Depending on the first queries return value, queries for parent Chassis
+    * Caches all objects to indexedDB to be used offline later
+    */
+   async populateFromAPI(): Promise<void> {
+      this.chassis = [];
+      this.brands = [];
+
+      // Query for random Cars
+      await this.carSelectorService.queryForRandomCars().then(observables => {
          let numberOfObservables = observables.length;
          let firedObservables = 0;
          let resultCars = [];
 
+         // Loop through all returned observables
          observables.forEach(obsvervable => {
             obsvervable.subscribe(async data => {
                resultCars.push(data[0]);
@@ -94,18 +122,80 @@ export class CarSelectorComponent implements OnInit {
 
                // If all observables fired
                if (firedObservables >= numberOfObservables) {
-                  resultCars.forEach(resultCar => {
+                  let chassisIndexes = [];
 
-                     // IndexedDB Query
-                     db.storedBrands.where('name').equalsIgnoreCase(resultCar.brand).first().then(res => {
-                        this.brands.push(res['name']);
+                  // Upload each Car to indexedDB
+                  resultCars.forEach(resultCar => {
+                     chassisIndexes.push(resultCar.chassisIndex);
+                     db.storedCars.put(resultCar);
+                  });
+
+                  // Query for multiple Chassis based on previous Car's chassisIndexes
+                  this.carSelectorService.getChassis(chassisIndexes).subscribe(data => {
+                     data.forEach(async element => {
+
+                        // Fetch and create a Blob from Firebase API images
+                        const res = await fetch('https://storage.googleapis.com/west-webshop.appspot.com/' + element.chassisIndex + '.png');
+                        const blob = await res.blob();
+                        element.picture = blob;
+
+                        // Store Chassis to indexedDB with appended Blob image
+                        db.storedChassis.put(element);
                      });
+
+                     // Offline methods
+                     this.getAllActiveBrands();
                   });
                }
             });
          });
 
       });
+   }
+
+   /**
+    * For every Car in indexedDB query for its corresponding brand
+    */
+   getAllActiveBrands(): void {
+
+      // Query for stored cars from indexed DB
+      db.storedCars.toArray().then(res => {
+         this.cars = res;
+
+         // Fill up an array of brands that we need to query for
+         let queriedBrands: string[] = [];
+         this.cars.forEach(car => {
+            if (!queriedBrands.includes(car.brand)) {
+               queriedBrands.push(car.brand);
+            }
+         });
+
+         // Query for all brands that needs to be displayed
+         db.storedBrands.where('name').anyOf(queriedBrands).toArray().then(res => {
+
+            // Map {id, name} object to string[]
+            this.brands = res.map(obj => {
+               return obj['name'];
+            });
+
+            this.activeBrands = this.brands;
+         });
+
+      });
+   }
+
+   /**
+    * Converts a Blob to an URL
+    * Returned URL is sanitized in order to be used in an image's src
+    * 
+    * @param blob The Blob to convert
+    * @returns SafeUrl that references the Blob
+    */
+   blobToImageSrc(blob) {
+      let binaryData = [];
+      binaryData.push(blob);
+      const url = this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL(new Blob(binaryData, { type: 'application/zip' })));
+      return url;
    }
 
    /**
@@ -116,7 +206,6 @@ export class CarSelectorComponent implements OnInit {
       this.lowerSideNav.toggle();
       this.hoveredTextIndex = -1;
       this.stage = 0;
-      //this.listElements = this.brands;
    }
 
    /**
@@ -136,14 +225,12 @@ export class CarSelectorComponent implements OnInit {
    reAddBrands(inputEvent: any): void {
       let searchedText = (inputEvent.target as HTMLInputElement).value;
 
-      this.listElements = [];
-      let index = 0;
-      //for (let i = 0; i < this.brands.length; i++) {
-      // if (this.brands[i].startsWith(searchedText.toUpperCase())) {
-      //  this.listElements[index] = this.brands[i];
-      // index += 1;
-      //}
-      //}
+      this.activeBrands = [];
+      for (let i = 0; i < this.brands.length; i++) {
+         if (this.brands[i].startsWith(searchedText.toUpperCase())) {
+            this.activeBrands.push(this.brands[i]);
+         }
+      }
    }
 
    /**
@@ -273,6 +360,7 @@ export class CarSelectorComponent implements OnInit {
 
    // This method calls carSelectorService to check for cars in searched brand
    selectElements(selected: string): void {
+      this.cdr.detectChanges();
       this.loading = true;
 
       waitForElm('.mat-drawer-inner-container').then((elm) => {
@@ -283,78 +371,24 @@ export class CarSelectorComponent implements OnInit {
          // Chassis selection (stage 0 -> stage 1)
          if (this.stage == 0) {
             this.stage += 1;
+            this.loading = false;
 
-            let localStorageQuery = localStorage.getItem(selected);
-            if (localStorageQuery !== null) {
-               let localStorageQueryParts = localStorageQuery.split('*');
-               let data = [];
-               for (let i = 0; i < localStorageQueryParts.length; i++) {
-                  let object = JSON.parse(localStorageQueryParts[i]);
-                  data.push(object);
-               }
-
-               this.chassis = data;
-               this.chassisActive = this.chassis;
-
-               // Preload all chassis images
-               let urls = [];
-               for (let i = 0; i < this.chassis.length; i++) {
-                  if (this.chassis[i].hasImg) {
-                     urls.push('https://storage.googleapis.com/west-webshop.appspot.com/' + this.chassis[i].chassisIndex + '.png');
-                  }
-               }
-               this.preloadImages(urls);
-
-               // Fill listElement with chassis names
-               this.listElements = [];
-               for (let objec of this.chassis) {
-                  this.listElements.push(objec.name);
-               }
-
-               this.lastSelectedBrand = selected;
-               this.loading = false;
-
-            } else {
-               this.carSelectorService.selectBrand(selected).pipe(first()).subscribe(data => {
-                  this.chassis = data;
-                  this.chassisActive = this.chassis;
-
-                  // Fill listElement with chassis names
-                  this.listElements = [];
-                  for (let objec of this.chassis) {
-                     this.listElements.push(objec.name);
-                  }
-
-                  this.lastSelectedBrand = selected;
-                  this.loading = false;
-
-                  // Add query result to localStorage to optimize future queries
-                  let localStorageLine = '';
-                  for (let i = 0; i < data.length; i++) {
-                     localStorageLine += '{"chassisIndex": ' + data[i].chassisIndex + ',"name": "' + data[i].name + '","year": "' + data[i].year + '","hasImg": ' + data[i].hasImg + '}*';
-                  }
-
-                  // Remove last '*' seperator character from string
-                  localStorageLine = localStorageLine.slice(0, -1);
-                  localStorage.setItem(selected, localStorageLine);
-               });
-            }
+            this.chassisActive = [];
+            db.storedChassis.where('brand').equalsIgnoreCase(selected).toArray().then(res => {
+               this.chassis = res;
+               this.chassisActive = res;
+            });
 
             // Engine selection (stage 1 -> stage 2)
          } else if (this.stage == 1) {
             this.stage += 1;
-            this.carSelectorService.selectChassis(selected).pipe(first()).subscribe(data => {
-               this.cars = data;
-               this.carsActive = this.cars;
+            this.loading = false;
+            this.lastSelectedBrand = selected;
 
-               // Fill listelements with engine names
-               this.listElements = [];
-               for (let objec of this.cars) {
-                  this.listElements.push(objec.engine);
-               }
-
-               this.lastSelectedChassis = selected;
-               this.loading = false;
+            this.carsActive = [];
+            db.storedCars.where('chassis').equalsIgnoreCase(selected).toArray().then(res => {
+               this.cars = res;
+               this.carsActive = res;
             });
          }
 
@@ -367,11 +401,9 @@ export class CarSelectorComponent implements OnInit {
     */
    back(): void {
       if (this.stage == 1) {
-         //this.listElements = this.brands;
          this.stage = 0;
       } else {
-         this.stage = 0;
-         this.selectElements(this.lastSelectedBrand);
+         this.stage = 1;
       }
 
       this.cdr.detectChanges();

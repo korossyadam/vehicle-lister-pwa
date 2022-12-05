@@ -1,0 +1,31 @@
+<div class="content-container">
+
+   <!-- This section contains data about the current Car -->
+   <div *ngIf="currentCar" class="car-container">
+
+      <!-- Image -->
+      <img *ngIf="isOnline" class="car-img" src="https://storage.googleapis.com/west-webshop.appspot.com/{{ currentCar.chassisIndex }}.png" alt="">
+      <img *ngIf="!isOnline" class="car-img" [src]="offlineSrc" alt="">
+
+      <!-- Upper text info about the current Car -->
+      <p>{{ currentCar.brand }}</p>
+      <p>{{ currentCar.chassis }}</p>
+      <p>{{ currentCar.engine }} ({{ currentCar.hp }}LE)</p>
+      <mat-divider></mat-divider>
+
+      <!-- Lower text info about the current Car -->
+      <div class="car-info">
+         <p>Gyártási év: <span>{{ currentCar.year }}</span></p>
+         <p>Teljesítmény [LE]: <span>{{ currentCar.hp }}</span></p>
+         <p>Teljesítmény [KW]: <span>{{ currentCar.kw }}</span></p>
+         <p>Hengerűrtartalom: <span>{{ currentCar.displacement }}</span></p>
+         <p>Motorkódok: <span>{{ currentCar.engineCode }}</span></p>
+         <p>Üzemanyag: <span>{{ currentCar.fuel }}</span></p>
+      </div>
+
+      <!-- Home button -->
+      <button mat-raised-button routerLink="/home">Vissza a főoldalra</button>
+
+   </div>
+
+</div>

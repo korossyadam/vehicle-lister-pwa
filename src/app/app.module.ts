@@ -17,8 +17,12 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon'
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
+
 import { MainNavigationComponent } from './main-navigation/main-navigation.component';
 import { HomeComponent } from './home/home.component';
+import { CarComponent } from './car/car.component';
 
 @NgModule({
   declarations: [
@@ -26,6 +30,7 @@ import { HomeComponent } from './home/home.component';
     CarSelectorComponent,
     MainNavigationComponent,
     HomeComponent,
+    CarComponent,
   ],
   imports: [
     BrowserModule,
@@ -36,6 +41,8 @@ import { HomeComponent } from './home/home.component';
     MatIconModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    MatCardModule,
+    MatDividerModule,
     AngularFireModule.initializeApp(environment.firebase),
     AngularFireDatabaseModule,
     AngularFirestoreModule,

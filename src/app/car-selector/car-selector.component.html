@@ -1,6 +1,7 @@
 <!-- Displayed selected vehicle image on top of everything-->
 <mat-card *ngIf="hoveredTextIndex != -1 && stage == 1" [ngStyle]="imgCardStyle">
-   <img *ngIf="chassisActive[hoveredTextIndex].hasImg == true" src="https://storage.googleapis.com/west-webshop.appspot.com/{{ chassisActive[hoveredTextIndex].chassisIndex }}.png" alt="">
+   <img *ngIf="chassisActive[hoveredTextIndex].hasImg == true && isOnline" src="https://storage.googleapis.com/west-webshop.appspot.com/{{ chassisActive[hoveredTextIndex].chassisIndex }}.png" alt="">
+   <img *ngIf="chassisActive[hoveredTextIndex].hasImg == true && !isOnline" [src]="blobToImageSrc(chassisActive[hoveredTextIndex].picture)" alt="">
    <mat-icon *ngIf="chassisActive[hoveredTextIndex].hasImg == false" class="error-icon">image_not_supported</mat-icon>
 </mat-card>
 
@@ -106,7 +107,7 @@
                   <div class="framed">
                      <!-- Brand selector-->
                      <div *ngIf="stage == 0">
-                        <ng-container *ngFor="let brand of brands; let i = index">
+                        <ng-container *ngFor="let brand of activeBrands; let i = index">
                            <tr>
                               <td *ngIf="onlyDecor(brand) || lastDecor != getNewDecor(brand)" class="decor-row">{{ lastDecor }}</td>
                            </tr>
@@ -144,7 +145,7 @@
                         <ng-container *ngFor="let car of carsActive; let i = index">
                            
                            <!-- Gray line above every new engine displacement category -->
-                           <tr *ngIf="lastDecor != getNewDecor(car.engine)">
+                           <tr *ngIf="onlyDecor(car.engine) || lastDecor != getNewDecor(car.engine)">
                               <td class="decor-row fifth-width">{{ lastDecor }}</td>
                               <td class="decor-row fifth-width"></td>
                               <td class="decor-row fifth-width"></td>
