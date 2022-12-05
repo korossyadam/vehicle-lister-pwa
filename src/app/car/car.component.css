@@ -24,3 +24,17 @@
 .car-info span {
    float: right;
 }
+
+@media screen and (max-width: 1200px) {
+   .content-container {
+      width: 80%;
+   }
+
+   .car-container {
+      width: 100%;
+   }
+
+   .car-img {
+      max-width: 95%;
+   }
+}
